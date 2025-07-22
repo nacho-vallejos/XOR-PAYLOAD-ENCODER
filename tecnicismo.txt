@@ -1,0 +1,25 @@
+Ofuscación XOR para cargas útiles (byte estático)
+
+Una de las formas más sencillas de ocultar shellcode de los escáneres estáticos es XOR con una clave de un solo byte.
+
+Cómo funciona:
+Se trata de un OR exclusivo a nivel de bits aplicado a cada byte de una carga útil utilizando un byte clave fijo. El operador XOR (^) tiene una propiedad interesante:
+
+A ^ B ^ B = A - esto significa que la codificación y decodificación utilizan exactamente la misma función.
+NOP (0x90) ^ 0xAA = 0x3A → darle la vuelta con la misma clave → 0x3A ^ 0xAA = 0x90
+
+Pero aca está el truco:
+
+Este método no escala bien. Una clave de un solo byte sobre una gran carga útil crea patrones.
+Los analistas pueden forzar las 256 posibilidades de claves en milisegundos, un juego de niños en el mundo de las ER.
+
+Herramientas como CyberChef, xortool, o incluso un practicante de la facu avispado puede detectar y descifrar esto en segundos.
+
+¿Cuándo lo seguirías usando?
+Obfuscando fragmentos cortos de shellcode empaquetados en .rsrc o blobs de configuración.
+Evitar impactos de firmas estáticas en escaneos básicos de AV o YARA
+En stagers o loaders donde el tamaño y el sigilo importan más que la seguridad
+Para decodificación en memoria justo antes de VirtualAlloc + memcpy + ((void(*)())ptr)();
+
+💡 TL;DR:
+Single-byte XOR no va a salvar de REs o sandboxes, pero todavía tiene su lugar en el conjunto de herramientas - especialmente cuando se encadena con capas de codificación más creativas, string hashing, o runtime injection
