@@ -1,40 +1,75 @@
-# XOR-PAYLOAD-ENCODER
-# README.md
+#include <stdio.h>
+#include <windows.h>
 
-¿Qué es esto?
+//=============================================
+// Codificador/Decodificador XOR con clave de 1 byte
+//=============================================
+// Funciona para codificar y decodificar gracias a la simetría del XOR.
+// Ejemplo: ABBA
+//
+// buffer: puntero a los datos (puede ser texto plano o cifrado)
+// size: cantidad de bytes a procesar
+// key: clave XOR de 1 byte para ofuscar el buffer
+void EncodeXOR_StaticByte(unsigned char* buffer, size_t size, unsigned char key) {
+    for (size_t index = 0; index < size; index++) {
+        buffer[index] ^= key; // XORea cada byte con la clave
+    }
+}
 
-Un script en C simple para entender cómo se puede codificar y decodificar un payload (shellcode) usando XOR con clave de 1 byte. El ejemplo incluye un shellcode simulado que abre la calculadora de Windows (`calc.exe`).
-La idea es que veas cómo funciona la ofuscación con XOR, que es un método clásico para evitar detecciones básicas y proteger tu código.
+int main() {
+    //==========================================
+    // Shellcode simulado: Ejecutar calc.exe (x86)
+    //==========================================
+    // Versión recortada para demo solamente
+    // El shellcode original completo suele tener ~220-300 bytes
+    //
+    // Generado con: msfvenom -p windows/exec CMD=calc.exe -f c -b "\x00"
+    unsigned char shellcode[] = {
+        0x31, 0xC9,                   // xor ecx, ecx
+        0x51,                         // push ecx
+        0x68, 0x63, 0x61, 0x6C, 0x63, // push 'calc'
+        0x54,                         // push esp
+        0x88, 0xC7,                   // mov al, cl
+        0x93,                         // xchg eax, ebx (ejemplo placeholder)
+        0xC2, 0x77,                   // ret 0x77 (ejemplo placeholder)
+        0xFF, 0xD0                    // call eax
+    };
 
-¿Cómo funciona?
+    // Guardamos el tamaño original
+    size_t shellcode_len = sizeof(shellcode);
 
-1. El script tiene un array con un shellcode acotado (simulado).
-2. Se imprime el shellcode original en consola, en formato hexadecimal.
-3. Se codifica el shellcode con XOR usando una clave fija de 1 byte.
-4. Se muestra el shellcode codificado, para que veas cómo queda ofuscado.
-5. Se decodifica nuevamente con XOR (igual que codificar, por la simetría).
-6. Se muestra el shellcode decodificado, listo para usar o ejecutar.
-7. Opcionalmente, se puede ejecutar el shellcode para abrir la calculadora (líneas comentadas para que lo hagas bajo tu propio riesgo).
+    // Clave XOR para codificar (1 byte)
+    unsigned char xor_key = 0x5A; // clave arbitraria (0x5A = 'Z')
 
-Requisitos
+    printf("[*] Shellcode original:\n");
+    for (size_t i = 0; i < shellcode_len; i++) {
+        printf("\\x%02X", shellcode[i]);
+    }
+    printf("\n");
 
-* Compilador C para Windows (Visual Studio, MinGW, etc).
-* Conocimientos básicos de C y sistemas Windows.
-* Entorno seguro para probar código que ejecuta shellcodes.
+    // Paso 1: Codificar el shellcode
+    EncodeXOR_StaticByte(shellcode, shellcode_len, xor_key);
+    printf("[*] Shellcode codificado (XOR con 0x%02X):\n", xor_key);
+    for (size_t i = 0; i < shellcode_len; i++) {
+        printf("\\x%02X", shellcode[i]);
+    }
+    printf("\n");
 
+    // Paso 2: Decodificar antes de ejecutar (misma función, XOR otra vez)
+    EncodeXOR_StaticByte(shellcode, shellcode_len, xor_key);
 
-Cómo compilar y correr
+    printf("[*] Shellcode decodificado (listo para ejecutar):\n");
+    for (size_t i = 0; i < shellcode_len; i++) {
+        printf("\\x%02X", shellcode[i]);
+    }
+    printf("\n");
 
-Con MinGW, por ejemplo:
-gcc xor_encoder_decoder.c -o xor_encoder_decoder.exe
-./xor_encoder_decoder.exe
+    // =====================
+    // Paso 3 (opcional): Ejecutar el shellcode
+    // Descomentar a riesgo propio - esto va a abrir calc.exe
+    //
+    // void(*exec)() = (void(*)())shellcode;
+    // exec();
 
-
-Advertencias
-
-* Ejecutar shellcodes puede ser peligroso. Solo correr en ambientes controlados.
-* Este código es para fines educativos y experimentales.
-* No usar en máquinas productivas ni sin autorización.
-
-¿Querés aprender más?
-Hecho con paciencia, mate y teclado.
+    return 0;
+}
